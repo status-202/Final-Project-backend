@@ -11,11 +11,15 @@ const DeveloperComputer = require('./DeveloperComputer');
 
 const jwt = require("jsonwebtoken");
 
+// MONGOOSE CONNECTION
+
 const dbURI = process.env.DBURI;
 
-mongoose.connect(dbURI, {useNewUrlParser: true, useUnifiedTopology: true})
+mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(res => app.listen(port, () => console.log(`Listening on ${port} and connected to atlas`)))
   .catch(err => console.log(err))
+
+// ROUTES
 
 app.use(express.json());
 app.use(cors());
@@ -25,24 +29,46 @@ app.get("/", (req, res) => {
   res.send("Hello from SLAP");
 });
 
-app.get("/dashboard", authenticateToken, async (req, res) => {
-    const computers = await DeveloperComputer.find();
-    // console.log(computers);
-    res.json(computers);
-});
-
 app.post("/login", (req, res) => {
-  const userName = req.body.profileObj.name;
-  const user = { name: userName };
+  const { profileObj } = req.body;
+  const user = profileObj;
   // const clientToken = req.body.token;
   const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN);
   res.json({ user, accessToken });
 });
 
+app.get("/dashboard/:id", async (req, res) => {
+  const { id } = req.params;
+  // console.log(id);
+  const devComputer = await DeveloperComputer.find({ computerID: id });
+  console.log(devComputer);
+  res.json(devComputer);
+});
+
+app.get("/dashboard", authenticateToken, async (req, res) => {
+  const computers = await DeveloperComputer.find();
+  // console.log(computers);
+  res.json(computers);
+});
+
+app.post("/dashboard", authenticateToken, async (req, res) => {
+  const newDevComputer = new DeveloperComputer(req.body);
+  await newDevComputer.save();
+  res.send(newDevComputer);
+});
+
+app.delete("/dashboard/:id", authenticateToken, async (req, res) => {
+  const computerID = req.params.id;
+  const deleted = await DeveloperComputer.findOneAndDelete({ computerID: computerID })
+  console.log(deleted);
+  res.status(200).json("deleted");
+})
+
+
 function authenticateToken(req, res, next) {
   const authHeader = req.headers.authorization;
-  console.log(authHeader)
-  const token = authHeader.split(" ")[1] || null ;
+  // console.log(authHeader)
+  const token = authHeader.split(" ")[1] || null;
   if (token === null) res.sendStatus(401);
   jwt.verify(token, process.env.ACCESS_TOKEN, (err, user) => {
     if (err) return res.sendStatus(403);
@@ -50,5 +76,11 @@ function authenticateToken(req, res, next) {
     next();
   });
 }
+
+process.on('SIGINT', () => {
+  mongoose.disconnect();
+  console.log('Closed Connection gracefully')
+  process.exit();
+});
 
 // app.listen(port, () => console.log(`App is listening on port ${port}`));
