@@ -2,8 +2,8 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const DeveloperComputerSchema = new Schema ({
-  ComputerId: String,
-  SerialNO: String,
+  computerID: String,
+  serialNO: String,
   informationLink: String,
   users: Array,
   handoutDate: Date,
