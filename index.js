@@ -41,7 +41,7 @@ app.get("/dashboard/:id", async (req, res) => {
   const { id } = req.params;
   // console.log(id);
   const devComputer = await DeveloperComputer.find({ computerID: id });
-  console.log(devComputer);
+  //console.log(devComputer);
   res.json(devComputer);
 });
 
@@ -56,6 +56,36 @@ app.post("/dashboard", authenticateToken, async (req, res) => {
   await newDevComputer.save();
   res.send(newDevComputer);
 });
+
+app.patch("/dashboard/:id", authenticateToken, async (req, res) => {
+  const user = req.body.users;
+  const updatedComputer = req.body.computer
+  const computer = await DeveloperComputer.find({ computerID: updatedComputer.computerID });
+  let query = {$set: {}};
+  for (let key in updatedComputer) {
+     if(updatedComputer[key] !== computer[0][key]) {
+       query.$set[key] = updatedComputer[key];
+     }
+  }
+   await DeveloperComputer.updateOne({ computerID: updatedComputer.computerID }, query);
+   if(user){
+     await DeveloperComputer.findOneAndUpdate(
+        {
+          computerID: updatedComputer.computerID
+        }, 
+        {
+          $push: {
+            users: {
+              $each: [user], 
+              $position: 0
+            }
+          }
+        }
+       );
+   }
+  const updatedComputerInDatabase = await DeveloperComputer.find({ computerID: updatedComputer.computerID});
+  res.json(updatedComputerInDatabase);
+ })
 
 app.delete("/dashboard/:id", authenticateToken, async (req, res) => {
   const computerID = req.params.id;
