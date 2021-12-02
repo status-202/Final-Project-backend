@@ -88,8 +88,8 @@ app.patch("/dashboard/:id", authenticateToken, async (req, res) => {
  })
 
 app.delete("/dashboard/:id", authenticateToken, async (req, res) => {
-  const computerID = req.params.id;
-  const deleted = await DeveloperComputer.findOneAndDelete({ computerID: computerID })
+  const { id } = req.params;
+  const deleted = await DeveloperComputer.findOneAndDelete({ computerID: id })
   console.log(deleted);
   res.status(200).json("deleted");
 })
