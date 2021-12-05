@@ -59,15 +59,15 @@ app.post("/dashboard", authenticateToken, async (req, res) => {
 app.patch("/dashboard/:id", authenticateToken, async (req, res) => {
   const user = req.body.users;
   const updatedComputer = req.body.computer;
-  // console.log(user);
-  // console.log(updatedComputer);
   const computer = await DeveloperComputer.find({ computerID: updatedComputer.computerID });
   let query = {$set: {}};
+
   for (let key in updatedComputer) {
      if(updatedComputer[key] !== computer[0][key]) {
        query.$set[key] = updatedComputer[key];
      }
   }
+
    await DeveloperComputer.updateOne({ computerID: updatedComputer.computerID }, query);
    if(user){
      await DeveloperComputer.findOneAndUpdate(
@@ -84,8 +84,8 @@ app.patch("/dashboard/:id", authenticateToken, async (req, res) => {
         }
        );
    }
+
   const updatedComputerInDatabase = await DeveloperComputer.find({ computerID: updatedComputer.computerID});
-  // console.log(updatedComputerInDatabase);
   res.json(updatedComputerInDatabase);
  })
 
@@ -95,25 +95,77 @@ app.delete("/dashboard/:id", authenticateToken, async (req, res) => {
   res.status(200).json("deleted");
 })
 
-routes for coreComputers
-app.get('/coreComputers', async (req, res) => {
+//routes for coreComputers
+app.get('/coreComputers', authenticateToken, async (req, res) => {
   const coreComputers = await CoreComputer.find();
   res.json(coreComputers);
 })
 
-app.get('/coreComputers/:id', async (req, res) => {
+app.get('/coreComputers/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   const coreComputer = await CoreComputer.find({ computerId: id });
   res.json(coreComputer);
 })
 
-app.post('/coreComputers', async (req, res) => {
+app.post('/coreComputers', authenticateToken, async (req, res) => {
   const newCoreComputer = new CoreComputer(req.body);
   await newCoreComputer.save();
   res.send(newCoreComputer);
 });
 
-app.delete("/coreComputers/:id", async (req, res) => {
+app.patch("/coreComputers/:id", authenticateToken, async (req, res) => {
+  const user = req.body.users;
+  const updatedComputer = req.body.computer;
+  const comment = req.body.Comments;
+
+  const computer = await CoreComputer.find({ computerId: updatedComputer.computerId });
+  let query = {$set: {}};
+
+  for (let key in updatedComputer) {
+     if(updatedComputer[key] !== computer[0][key]) {
+       query.$set[key] = updatedComputer[key];
+     }
+  }
+
+   await CoreComputer.updateOne({ computerId: updatedComputer.computerId }, query);
+
+   if(user){
+     await CoreComputer.findOneAndUpdate(
+        {
+          computerId: updatedComputer.computerId
+        }, 
+        {
+          $push: {
+            users: {
+              $each: [user], 
+              $position: 0
+            }
+          }
+        }
+       );
+   }
+
+  if(comment){
+    await CoreComputer.findOneAndUpdate(
+       {
+         computerId: updatedComputer.computerId
+       }, 
+       {
+         $push: {
+           Comments: {
+             $each: [comment], 
+             $position: 0
+           }
+         }
+       }
+      );
+  }
+
+  const updatedComputerInDatabase = await CoreComputer.find({ computerId: updatedComputer.computerId});
+  res.json(updatedComputerInDatabase);
+ });
+
+app.delete("/coreComputers/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
   const deleted = await CoreComputer.findOneAndDelete({ computerId: id })
   res.status(200).json("deleted");
@@ -133,8 +185,7 @@ function authenticateToken(req, res, next) {
 
 process.on('SIGINT', () => {
   mongoose.disconnect();
-  console.log('Closed Connection gracefully')
+  console.log('Connection closed')
   process.exit();
 });
 
-// app.listen(port, () => console.log(`App is listening on port ${port}`));
