@@ -8,6 +8,7 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 dotenv.config({ path: "./.env" });
 const DeveloperComputer = require('./DeveloperComputer');
+const CoreComputer = require('./CoreComputer');
 
 const jwt = require("jsonwebtoken");
 
@@ -39,9 +40,7 @@ app.post("/login", (req, res) => {
 
 app.get("/dashboard/:id", async (req, res) => {
   const { id } = req.params;
-  // console.log(id);
   const devComputer = await DeveloperComputer.find({ computerID: id });
-  //console.log(devComputer);
   res.json(devComputer);
 });
 
@@ -96,6 +95,29 @@ app.delete("/dashboard/:id", authenticateToken, async (req, res) => {
   res.status(200).json("deleted");
 })
 
+// routes for coreComputers
+// app.get('/coreComputers', async (req, res) => {
+//   const coreComputers = await CoreComputer.find();
+//   res.json(coreComputers);
+// })
+
+// app.get('/coreComputers/:id', async (req, res) => {
+//   const { id } = req.params;
+//   const coreComputer = await CoreComputer.find({ computerId: id });
+//   res.json(coreComputer);
+// })
+
+// app.post('/coreComputers', async (req, res) => {
+//   const newCoreComputer = new CoreComputer(req.body);
+//   await newCoreComputer.save();
+//   res.send(newCoreComputer);
+// });
+
+// app.delete("/coreComputers/:id", async (req, res) => {
+//   const { id } = req.params;
+//   const deleted = await CoreComputer.findOneAndDelete({ computerId: id })
+//   res.status(200).json("deleted");
+// });
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers.authorization;
