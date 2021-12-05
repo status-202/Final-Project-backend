@@ -59,7 +59,9 @@ app.post("/dashboard", authenticateToken, async (req, res) => {
 
 app.patch("/dashboard/:id", authenticateToken, async (req, res) => {
   const user = req.body.users;
-  const updatedComputer = req.body.computer
+  const updatedComputer = req.body.computer;
+  // console.log(user);
+  // console.log(updatedComputer);
   const computer = await DeveloperComputer.find({ computerID: updatedComputer.computerID });
   let query = {$set: {}};
   for (let key in updatedComputer) {
@@ -84,13 +86,13 @@ app.patch("/dashboard/:id", authenticateToken, async (req, res) => {
        );
    }
   const updatedComputerInDatabase = await DeveloperComputer.find({ computerID: updatedComputer.computerID});
+  // console.log(updatedComputerInDatabase);
   res.json(updatedComputerInDatabase);
  })
 
 app.delete("/dashboard/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
   const deleted = await DeveloperComputer.findOneAndDelete({ computerID: id })
-  console.log(deleted);
   res.status(200).json("deleted");
 })
 
