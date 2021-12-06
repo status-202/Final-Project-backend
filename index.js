@@ -9,6 +9,7 @@ const dotenv = require("dotenv");
 dotenv.config({ path: "./.env" });
 const DeveloperComputer = require('./DeveloperComputer');
 const CoreComputer = require('./CoreComputer');
+const CoreCellphone = require('./CoreCellphone');
 
 const jwt = require("jsonwebtoken");
 
@@ -26,8 +27,9 @@ app.use(express.json());
 app.use(cors());
 app.use(morgan("dev"));
 
+
 app.get("/", (req, res) => {
-  res.send("Hello from SLAP");
+  res.send("Hello from SLAP Server");
 });
 
 app.post("/login", (req, res) => {
@@ -38,7 +40,9 @@ app.post("/login", (req, res) => {
   res.json({ user, accessToken });
 });
 
-app.get("/dashboard/:id", async (req, res) => {
+//routes for devComputers
+
+app.get("/dashboard/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
   const devComputer = await DeveloperComputer.find({ computerID: id });
   res.json(devComputer);
@@ -96,15 +100,16 @@ app.delete("/dashboard/:id", authenticateToken, async (req, res) => {
 })
 
 //routes for coreComputers
-app.get('/coreComputers', authenticateToken, async (req, res) => {
-  const coreComputers = await CoreComputer.find();
-  res.json(coreComputers);
-})
 
 app.get('/coreComputers/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
-  const coreComputer = await CoreComputer.find({ computerId: id });
+  const coreComputer = await CoreComputer.find({ computerID: id });
   res.json(coreComputer);
+})
+
+app.get('/coreComputers', authenticateToken, async (req, res) => {
+  const coreComputers = await CoreComputer.find();
+  res.json(coreComputers);
 })
 
 app.post('/coreComputers', authenticateToken, async (req, res) => {
@@ -116,9 +121,8 @@ app.post('/coreComputers', authenticateToken, async (req, res) => {
 app.patch("/coreComputers/:id", authenticateToken, async (req, res) => {
   const user = req.body.users;
   const updatedComputer = req.body.computer;
-  const comment = req.body.Comments;
 
-  const computer = await CoreComputer.find({ computerId: updatedComputer.computerId });
+  const computer = await CoreComputer.find({ computerID: updatedComputer.computerID });
   let query = {$set: {}};
 
   for (let key in updatedComputer) {
@@ -127,12 +131,12 @@ app.patch("/coreComputers/:id", authenticateToken, async (req, res) => {
      }
   }
 
-   await CoreComputer.updateOne({ computerId: updatedComputer.computerId }, query);
+   await CoreComputer.updateOne({ computerID: updatedComputer.computerID }, query);
 
    if(user){
      await CoreComputer.findOneAndUpdate(
         {
-          computerId: updatedComputer.computerId
+          computerID: updatedComputer.computerID
         }, 
         {
           $push: {
@@ -145,35 +149,35 @@ app.patch("/coreComputers/:id", authenticateToken, async (req, res) => {
        );
    }
 
-  if(comment){
-    await CoreComputer.findOneAndUpdate(
-       {
-         computerId: updatedComputer.computerId
-       }, 
-       {
-         $push: {
-           Comments: {
-             $each: [comment], 
-             $position: 0
-           }
-         }
-       }
-      );
-  }
-
-  const updatedComputerInDatabase = await CoreComputer.find({ computerId: updatedComputer.computerId});
+  const updatedComputerInDatabase = await CoreComputer.find({ computerID: updatedComputer.computerID});
   res.json(updatedComputerInDatabase);
  });
 
 app.delete("/coreComputers/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
-  const deleted = await CoreComputer.findOneAndDelete({ computerId: id })
+  const deleted = await CoreComputer.findOneAndDelete({ computerID: id })
   res.status(200).json("deleted");
 });
 
+//routes for core cellphones
+
+app.get('/coreCellphones', async (req, res) => {
+  const coreCellphones = await CoreCellphone.find();
+  res.json(coreCellphones);
+})
+
+app.post('/coreCellphones', async (req, res) => {
+  const newCoreCellphone = new CoreCellphone(req.body);
+  await newCoreCellphone.save();
+  res.send(newCoreCellphone);
+})
+
+
+
+
+
 function authenticateToken(req, res, next) {
   const authHeader = req.headers.authorization;
-  // console.log(authHeader)
   const token = authHeader.split(" ")[1] || null;
   if (token === null) res.sendStatus(401);
   jwt.verify(token, process.env.ACCESS_TOKEN, (err, user) => {

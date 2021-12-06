@@ -2,12 +2,15 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const CoreComputerSchema = new Schema({
-  computerId: String,
+  computerID: String,
   serialNO: String,
   type: String,
   licenseLink: String,
   users: Array,
-  Comments: Array,
+  comments: String,
+  currentFileValueKey: String,
+  handoutDate: Date,
+  chargerNumber: String,
 });
 
 const coreComputer = mongoose.model('coreComputer', CoreComputerSchema, 'CoreComputers');
