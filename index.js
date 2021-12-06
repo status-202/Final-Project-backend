@@ -172,10 +172,6 @@ app.post('/coreCellphones', async (req, res) => {
   res.send(newCoreCellphone);
 })
 
-
-
-
-
 function authenticateToken(req, res, next) {
   const authHeader = req.headers.authorization;
   const token = authHeader.split(" ")[1] || null;
