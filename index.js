@@ -27,13 +27,14 @@ app.use(express.json());
 app.use(cors());
 app.use(morgan("dev"));
 
-
-app.get("/", (req, res) => {
-  res.send("Hello from SLAP Server");
-});
+// app.get("/", (req, res) => {
+//   res.send("Hello from SLAP Server");
+// });
 
 app.post("/login", (req, res) => {
   const { profileObj } = req.body;
+  const userEmail = profileObj.email.split('@')[1];
+  if (userEmail !== 'appliedtechnology.se') return res.sendStatus(403);
   const user = profileObj;
   // const clientToken = req.body.token;
   const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN);
@@ -161,7 +162,7 @@ app.delete("/coreComputers/:id", authenticateToken, async (req, res) => {
 
 //routes for core cellphones
 
-app.get('/coreCellphones', async (req, res) => {
+app.get('/coreCellphones', authenticateToken, async (req, res) => {
   const coreCellphones = await CoreCellphone.find();
   res.json(coreCellphones);
 })
@@ -170,6 +171,28 @@ app.post('/coreCellphones', async (req, res) => {
   const newCoreCellphone = new CoreCellphone(req.body);
   await newCoreCellphone.save();
   res.send(newCoreCellphone);
+})
+
+app.patch("/coreCellphones/:id", authenticateToken, async (req, res) => {
+  const updateCellphone = req.body.cellphone;
+  const cellphone = await CoreCellphone.find({ cellphoneID: updateCellphone.cellphoneID });
+  let query = {$set: {}};
+
+  for (let key in updateCellphone) {
+     if(updateCellphone[key] !== cellphone[0][key]) {
+       query.$set[key] = updateCellphone[key];
+     }
+  }
+
+    await CoreCellphone.updateOne({ cellphoneID: updateCellphone.cellphoneID}, query);
+    const updatedCellphoneInDatabase = await CoreCellphone.find({ cellphoneID: updateCellphone.cellphoneID});
+    res.json(updatedCellphoneInDatabase);
+});
+
+app.delete('/coreCellphones/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  const deleted = await CoreCellphone.findOneAndDelete({ cellphoneID: id })
+  res.status(200).json("deleted");
 })
 
 function authenticateToken(req, res, next) {
