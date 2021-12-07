@@ -27,9 +27,9 @@ app.use(express.json());
 app.use(cors());
 app.use(morgan("dev"));
 
-// app.get("/", (req, res) => {
-//   res.send("Hello from SLAP Server");
-// });
+app.get("/", (req, res) => {
+  res.send("Hello from SLAP Server");
+});
 
 app.post("/login", (req, res) => {
   const { profileObj } = req.body;
